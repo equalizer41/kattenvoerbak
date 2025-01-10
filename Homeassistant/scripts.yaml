@@ -1,0 +1,24 @@
+send_kattenvoer_command:
+  alias: "Stuur Kattenvoer Commandos"
+  sequence:
+    - service: mqtt.publish
+      data:
+        topic: "/kattenvoerbak/motor"
+        payload: "Motor gestart"
+    - service: mqtt.publish
+      data:
+        topic: "/kattenvoerbak/feedingtype"
+        payload: "via de magiche knop (App)"
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.last_feeding_time
+      data:
+        timestamp: "{{ now().timestamp() | int }}"
+send_dosage_to_mqtt:
+    sequence:
+      - service: mqtt.publish
+        data:
+          topic: "/kattenvoerbak/dosage"
+          payload: "{{ states('input_select.voerdosering') }}"
+          retain: false
+          

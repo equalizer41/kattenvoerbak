@@ -1,0 +1,92 @@
+- id: sync_voertijden_naar_arduino
+  alias: Sync Voertijden naar Arduino
+  trigger:
+  - platform: state
+    entity_id:
+    - input_datetime.feeding_time_1
+    - input_datetime.feeding_time_2
+    - input_datetime.feeding_time_3
+  action:
+  - service: mqtt.publish
+    data:
+      topic: /kattenvoerbak/feeding_times
+      payload: "[\n  \"{{ states('input_datetime.feeding_time_1')[:5] }}\",\n  \"{{
+        states('input_datetime.feeding_time_2')[:5] }}\",\n  \"{{ states('input_datetime.feeding_time_3')[:5]
+        }}\"\n]"
+- id: voermomenten_starten
+  alias: Voermomenten starten
+  triggers:
+  - at: input_datetime.feeding_time_1
+    id: feeding_1
+    trigger: time
+  - at: input_datetime.feeding_time_2
+    id: feeding_2
+    trigger: time
+  - at: input_datetime.feeding_time_3
+    id: feeding_3
+    trigger: time
+  actions:
+  - data:
+      topic: /kattenvoerbak/feedingtype
+      payload: Via het schema
+    action: mqtt.publish
+- id: c766750659864976b180ecf8d44ee7aa
+  alias: Stel Feeding Type in via APP
+  description: Stel het feeding type in op 'via APP' bij drukken van Voer Nu-knop
+  trigger:
+  - platform: mqtt
+    topic: /kattenvoerbak/motor
+    payload: Motor gestart
+  action:
+  - service: mqtt.publish
+    data:
+      topic: /kattenvoerbak/feedingtype
+      payload: via APP
+- id: '1732488693619'
+  alias: Melding kattenvoer leeg
+  description: ''
+  triggers:
+  - entity_id:
+    - sensor.reservoir_niveau
+    below: 20
+    trigger: numeric_state
+  actions:
+  - data:
+      message: Katvoer bijvullen luie lul
+    action: notify.mobile_app_sm_s908b
+  mode: single
+- id: '1732534657935'
+  alias: Motorfoud
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: sensor.motor_status
+    to: Fout
+  action:
+  - service: notify.mobile_app_sm_s908b
+    data:
+      title: You dun goofed
+      message: Iets geks met de motor bekiek t eem tammo
+  mode: single
+- id: publish_day_time
+  alias: Stuur datum en tijd naar Arduino
+  trigger:
+  - platform: time_pattern
+    seconds: /10
+  action:
+  - service: mqtt.publish
+    data:
+      topic: /kattenvoerbak/day
+      payload: "{% set day_names = {'Mon': 'Ma','Tue': 'Di','Wed': 'Wo','Thu': 'Do','Fri':
+        'Vr','Sat': 'Za','Sun': 'Zo'} %} {% set month_names = {'01': 'januari','02':
+        'februari','03': 'maart','04': 'april','05': 'mei','06': 'juni',\n                      '07':
+        'juli','08': 'augustus','09': 'september','10': 'oktober','11': 'november','12':
+        'december'} %}\n{% set eng_day = now().strftime('%a') %} {% set day_num =
+        now().day %} {% set month_num = now().strftime('%m') %} {{ day_names[eng_day]
+        }} {{ day_num }} {{ month_names[month_num] }}\n"
+      retain: true
+  - service: mqtt.publish
+    data:
+      topic: /kattenvoerbak/time
+      payload: '{{ now().strftime(''%H:%M'') }}'
+      retain: true

@@ -1,0 +1,81 @@
+# Loads default set of integrations. Do not remove.
+default_config:
+
+homeassistant:
+  time_zone: Europe/Amsterdam
+  
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+# scene: !include scenes.yaml
+
+mqtt:
+  sensor:
+    # Sensor voor laatste voeding
+    - name: "Laatste Voeding"
+      state_topic: "/kattenvoerbak/feedingtype"
+      value_template: "{{ value }}"
+      icon: mdi:cat
+
+    # Sensor voor reservoirniveau
+    - name: "Reservoir Niveau"
+      state_topic: "/kattenvoerbak/reservoir"
+      unit_of_measurement: "%"
+      value_template: "{{ value }}"  # Pas aan afhankelijk van de inkomende waarde
+      icon: mdi:silo
+
+    # Sensor voor kattenvoerbak status
+    - name: "Kattenvoerbak Status"
+      state_topic: "/kattenvoerbak/status"
+      value_template: "{{ value }}"
+      
+      # Sensor voor motor status
+    - name: "Motor Status"
+      state_topic: "/kattenvoerbak/motor"
+      value_template: "{{ value }}"
+      
+       # Sensor voor instelling dosering
+    - name: "Doserings instelling"
+      state_topic: "/kattenvoerbak/dosage"
+      value_template: "{{ value }}"
+      icon: mdi:silo
+      
+    - name: "Laatste Keer Gevoerd"
+      state_topic: "/kattenvoerbak/last_feed"
+      value_template: "{{ value }}"
+      
+input_select:
+  voerdosering:
+    name: Kies Dosering
+    options:
+      - Hoog (50g)
+      - Gemiddeld (30g)
+      - Laag (10g)
+    initial: Gemiddeld (30g)
+    icon: mdi:cat-food
+
+input_datetime:
+  feeding_time_1:
+    name: "Voerschema - Tijd 1"
+    has_date: false
+    has_time: true
+
+  feeding_time_2:
+    name: "Voerschema - Tijd 2"
+    has_date: false
+    has_time: true
+
+  feeding_time_3:
+    name: "Voerschema - Tijd 3"
+    has_date: false
+    has_time: true
+    
+template:
+  - sensor:
+
+      - name: "Huidige Tijd"
+        state: "{{ now().strftime('%H:%M') }}"
+        icon: mdi:clock
